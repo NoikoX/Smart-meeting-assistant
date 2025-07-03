@@ -1,0 +1,8 @@
+streamlit
+openai
+python-dotenv
+googletrans==4.0.0-rc1
+requests
+nest_asyncio
+numpy
+scikit-learn
