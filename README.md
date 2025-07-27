@@ -3,6 +3,26 @@
 An advanced AI-powered web application designed to automatically process meeting recordings, extract actionable insights, and create a searchable organizational knowledge base. This project was developed to address the challenge of ineffective meetings, transforming spoken conversations into structured, valuable data.
 
 ---
+## Demo 🐛
+
+![](pics/p1.png)
+> My app provides a streamlined way to manage your meetings. Simply upload your video or audio recordings, and we'll automatically generate a full transcript, analyze the content, produce a concise summary, identify individual speakers, and extract important decisions and action items
+---
+
+![](pics/p2.png)
+
+![](pics/p4.png)
+
+![](pics/p5.png)
+
+![](pics/p6.png)
+
+![](pics/p7.png)
+
+> Here you can see that the task is assigned to Ben
+
+
+---
 
 ## ✨ Key Features
 
