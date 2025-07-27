@@ -15,7 +15,6 @@ from watchfiles import awatch
 
 
 class CalendarIntegration:
-    """Handles calendar and task creation functionality"""
 
     def __init__(self):
         self.calendar_events = []  # this is just for inmemory storage for demo
@@ -47,7 +46,6 @@ class CalendarIntegration:
             return {"success": False, "error": f"Calendar creation failed: {str(e)}"}
 
     def create_task(self, task: str, assignee: str, deadline: str = None, priority: str = "medium") -> Dict[str, Any]:
-        """Create a task (demo implementation)"""
         try:
             task_item = {
                 "id": len(self.tasks) + 1,
@@ -66,7 +64,6 @@ class CalendarIntegration:
             return {"success": False, "error": f"Task creation failed: {str(e)}"}
 
     def get_upcoming_events(self, days_ahead: int = 7) -> List[Dict[str, Any]]:
-        """Get upcoming calendar events"""
         cutoff_date = datetime.now() + timedelta(days=days_ahead)
         upcoming = []
 
@@ -78,7 +75,6 @@ class CalendarIntegration:
         return sorted(upcoming, key=lambda x: x["datetime"])
 
     def get_pending_tasks(self) -> List[Dict[str, Any]]:
-        """Get pending tasks"""
         return [task for task in self.tasks if task["status"] == "pending"]
 
 
@@ -90,7 +86,7 @@ class AIServices:
 
     @st.cache_data
     def translate_to_english_if_needed(_self, text: str) -> str:
-        # this detects the langgauge of the input text if its not in english
+        # this detects the langauge of the input text if its not in english
         try:
             async def _detect_lang_async():
                 return await _self.translator.detect(text)
@@ -150,7 +146,6 @@ class AIServices:
             return None
 
     def analyze_meeting(self, transcript: str, language: str = 'en') -> Optional[Dict[str, Any]]:
-        """Analyze meeting transcript using GPT-4 with enhanced function calling"""
 
         functions = [
             {
@@ -274,7 +269,6 @@ class AIServices:
             return None
 
     def _parse_unstructured_analysis(self, content: str) -> Dict[str, Any]:
-        """Enhanced parsing for unstructured analysis"""
 
         summary_match = re.search(r'(?:EXECUTIVE SUMMARY|Summary)[:\n]+(.*?)(?=\n\n|\n[A-Z]|$)', content,
                                   re.DOTALL | re.IGNORECASE)
@@ -327,7 +321,6 @@ class AIServices:
             return []
 
     def generate_visual_summary(self, meeting_data: Dict[str, Any]) -> Optional[str]:
-        """Enhanced visual summary generation"""
         try:
             summary_text = meeting_data.get('summary', 'Business Meeting')
             decisions_count = len(meeting_data.get('decisions', []))

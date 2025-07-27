@@ -10,12 +10,16 @@ An advanced AI-powered web application designed to automatically process meeting
 ---
 
 ![](pics/p2.png)
+---
 
 ![](pics/p4.png)
+---
 
 ![](pics/p5.png)
+---
 
 ![](pics/p6.png)
+---
 
 ![](pics/p7.png)
 

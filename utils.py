@@ -167,22 +167,19 @@ def display_meeting_results(meeting_data: Dict[str, Any], analysis: Dict[str, An
         else:
             st.write("No action items identified")
 
-    # Follow-up items
+
     follow_up = analysis.get('follow_up', [])
     if follow_up:
         st.subheader("🔄 Follow-up Required")
         for item in follow_up:
             st.write(f"• {item}")
 
-    # Function calls and automation results
     display_automation_results(analysis)
 
-    # Calendar and task integration display
     display_calendar_and_tasks(analysis, meeting_data)
 
 
 def display_automation_results(analysis: Dict[str, Any]):
-    """Display automated actions and function call results"""
     function_calls = analysis.get('function_calls', [])
     if function_calls:
         st.subheader("🤖 Automated Actions")
@@ -203,7 +200,6 @@ def display_automation_results(analysis: Dict[str, Any]):
                 if success:
                     st.success(result.get('message', 'Action completed successfully'))
 
-                    # Display created items
                     if 'event' in result:
                         display_created_event(result['event'])
                     elif 'task' in result:
@@ -211,13 +207,11 @@ def display_automation_results(analysis: Dict[str, Any]):
                 else:
                     st.error(f"Failed: {result.get('error', 'Unknown error')}")
 
-                # Show function arguments directly without nested expander
                 st.subheader("Function Arguments:")
                 st.json(call.get('arguments', {}))
 
 
 def display_created_event(event: Dict[str, Any]):
-    """Display details of a created calendar event"""
     st.write("📅 **Calendar Event Created:**")
     st.write(f"**Title:** {event.get('title', 'Untitled')}")
     st.write(f"**Date:** {event.get('date', 'TBD')}")
@@ -227,7 +221,6 @@ def display_created_event(event: Dict[str, Any]):
 
 
 def display_created_task(task: Dict[str, Any]):
-    """Display details of a created task"""
     st.write("✅ **Task Created:**")
     st.write(f"**Task:** {task.get('task', 'Untitled')}")
     st.write(f"**Assignee:** {task.get('assignee', 'Unassigned')}")
@@ -237,9 +230,7 @@ def display_created_task(task: Dict[str, Any]):
 
 
 def display_calendar_and_tasks(analysis: Dict[str, Any], meeting_data: Dict[str, Any]):
-    """Display calendar events and tasks created from the meeting"""
-    
-    # Calendar Events Section
+
     calendar_events = analysis.get('calendar_events', []) or meeting_data.get('calendar_events', [])
     tasks = analysis.get('tasks', []) or meeting_data.get('tasks', [])
     
@@ -280,7 +271,6 @@ def display_calendar_and_tasks(analysis: Dict[str, Any], meeting_data: Dict[str,
 
 
 def display_meeting_transcript(transcript: str, max_length: int = 1000):
-    """Display meeting transcript with expansion option"""
     if not transcript:
         st.write("No transcript available")
         return
@@ -290,7 +280,7 @@ def display_meeting_transcript(transcript: str, max_length: int = 1000):
     if len(transcript) <= max_length:
         st.text_area("Full Transcript", transcript, height=300, disabled=True)
     else:
-        # Show preview with expand option
+        # show preview with expand option
         preview = transcript[:max_length] + "..."
         st.text_area("Transcript Preview", preview, height=200, disabled=True)
         
@@ -299,7 +289,6 @@ def display_meeting_transcript(transcript: str, max_length: int = 1000):
 
 
 def display_upcoming_calendar_events(events: List[Dict[str, Any]]):
-    """Display upcoming calendar events"""
     if not events:
         st.info("No upcoming calendar events")
         return
@@ -328,7 +317,6 @@ def display_upcoming_calendar_events(events: List[Dict[str, Any]]):
 
 
 def display_pending_tasks(tasks: List[Dict[str, Any]]):
-    """Display pending tasks with management options"""
     if not tasks:
         st.info("No pending tasks")
         return
@@ -377,7 +365,6 @@ def display_pending_tasks(tasks: List[Dict[str, Any]]):
 
 
 def format_duration(seconds: float) -> str:
-    """Format duration in a human-readable way"""
     if seconds is None:
         return "N/A"
 
@@ -392,20 +379,17 @@ def format_duration(seconds: float) -> str:
 
 
 def truncate_text(text: str, max_length: int = 100) -> str:
-    """Truncate text to specified length"""
     if len(text) <= max_length:
         return text
     return text[:max_length - 3] + "..."
 
 
 def validate_file_size(file_size_bytes: int, max_size_mb: int = 100) -> bool:
-    """Validate if file size is within limits"""
     max_size_bytes = max_size_mb * 1024 * 1024
     return file_size_bytes <= max_size_bytes
 
 
 def get_system_info() -> Dict[str, str]:
-    """Get system information for debugging"""
     return {
         'platform': platform.system(),
         'python_version': platform.python_version(),
@@ -414,14 +398,12 @@ def get_system_info() -> Dict[str, str]:
 
 
 def display_meeting_statistics(stats: Dict[str, Any]):
-    """Display comprehensive meeting statistics"""
     if not stats:
         st.info("No statistics available")
         return
     
     st.subheader("📊 Meeting Statistics")
-    
-    # Main metrics
+
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -437,16 +419,14 @@ def display_meeting_statistics(stats: Dict[str, Any]):
         task_stats = stats.get('task_stats', {})
         total_tasks = sum(task_stats.values()) if task_stats else 0
         st.metric("Total Tasks", total_tasks)
-    
-    # Language distribution
+
     language_stats = stats.get('language_stats', [])
     if language_stats:
         st.subheader("🌍 Language Distribution")
         for lang, count in language_stats:
             lang_name = {'en': 'English', 'ka': 'Georgian', 'auto': 'Auto-detected'}.get(lang, lang)
             st.write(f"• {lang_name}: {count} meetings")
-    
-    # Task status breakdown
+
     if task_stats:
         st.subheader("✅ Task Status Breakdown")
         for status, count in task_stats.items():
@@ -455,7 +435,6 @@ def display_meeting_statistics(stats: Dict[str, Any]):
 
 
 def create_meeting_export(meeting_data: Dict[str, Any]) -> str:
-    """Create exportable meeting summary"""
     try:
         export_data = {
             'meeting_title': meeting_data.get('title', 'Untitled Meeting'),
@@ -480,7 +459,6 @@ def create_meeting_export(meeting_data: Dict[str, Any]) -> str:
 
 
 def display_similar_meetings(similar_meetings: List[Dict[str, Any]]):
-    """Display similar meetings based on content similarity"""
     if not similar_meetings:
         st.info("No similar meetings found")
         return

@@ -12,7 +12,6 @@ class DatabaseManager:
         self.init_database()
 
     def init_database(self):
-        """Initialize database with enhanced schema"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -94,7 +93,7 @@ class DatabaseManager:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
-                # Insert main meeting record
+                # inserting main meeting record
                 cursor.execute('''
                     INSERT INTO meetings (
                         title, date, duration, transcript, summary, decisions, 
@@ -105,20 +104,20 @@ class DatabaseManager:
                     meeting_data['title'],
                     meeting_data['date'],
                     meeting_data.get('duration', ''),
-                    meeting_data.get('transcript', ''),  # Store full transcript
+                    meeting_data.get('transcript', ''),  # storing full transcript
                     meeting_data.get('summary', ''),
                     json.dumps(meeting_data.get('decisions', [])),
                     json.dumps(meeting_data.get('action_items', [])),
                     json.dumps(meeting_data.get('participants', [])),
                     json.dumps(meeting_data.get('follow_up', [])),
-                    meeting_data.get('visual_summary_url', ''),  # Store image URL
+                    meeting_data.get('visual_summary_url', ''),  # storing image URL
                     meeting_data.get('language', 'en'),
                     self._serialize_embeddings(meeting_data.get('embeddings', []))
                 ))
 
                 meeting_id = cursor.lastrowid
 
-                # Save calendar events if any
+                # save calendar events if any
                 calendar_events = meeting_data.get('calendar_events', [])
                 for event in calendar_events:
                     cursor.execute('''
@@ -135,7 +134,6 @@ class DatabaseManager:
                         event.get('status', 'scheduled')
                     ))
 
-                # Save tasks if any
                 tasks = meeting_data.get('tasks', [])
                 for task in tasks:
                     cursor.execute('''
@@ -151,7 +149,7 @@ class DatabaseManager:
                         task.get('status', 'pending')
                     ))
 
-                # Save function calls log if any
+                # save function calls log if any
                 function_calls = meeting_data.get('function_calls', [])
                 for call in function_calls:
                     cursor.execute('''
@@ -174,12 +172,11 @@ class DatabaseManager:
             return None
 
     def get_meeting_by_id(self, meeting_id: int) -> Optional[Dict[str, Any]]:
-        """Get complete meeting data including transcript and visual summary"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
-                # Get main meeting data
+                # getting main meeting data
                 cursor.execute('''
                     SELECT * FROM meetings WHERE id = ?
                 ''', (meeting_id,))
@@ -188,17 +185,17 @@ class DatabaseManager:
                 if not meeting_row:
                     return None
 
-                # Convert to dict
+                # convert to dict
                 columns = [desc[0] for desc in cursor.description]
                 meeting = dict(zip(columns, meeting_row))
 
-                # Parse JSON fields
+                # parse JSON fields
                 meeting['decisions'] = json.loads(meeting.get('decisions', '[]'))
                 meeting['action_items'] = json.loads(meeting.get('action_items', '[]'))
                 meeting['participants'] = json.loads(meeting.get('participants', '[]'))
                 meeting['follow_up'] = json.loads(meeting.get('follow_up', '[]'))
 
-                # Get calendar events
+                # getting calendar events
                 cursor.execute('''
                     SELECT * FROM calendar_events WHERE meeting_id = ?
                 ''', (meeting_id,))
@@ -206,7 +203,7 @@ class DatabaseManager:
                 event_columns = [desc[0] for desc in cursor.description]
                 meeting['calendar_events'] = [dict(zip(event_columns, event)) for event in events]
 
-                # Get tasks
+                # get tasks
                 cursor.execute('''
                     SELECT * FROM tasks WHERE meeting_id = ?
                 ''', (meeting_id,))
@@ -214,7 +211,7 @@ class DatabaseManager:
                 task_columns = [desc[0] for desc in cursor.description]
                 meeting['tasks'] = [dict(zip(task_columns, task)) for task in tasks]
 
-                # Get function calls
+                # get function calls
                 cursor.execute('''
                     SELECT * FROM function_calls WHERE meeting_id = ?
                 ''', (meeting_id,))
@@ -234,7 +231,7 @@ class DatabaseManager:
             return None
 
     def get_all_meetings(self) -> List[Dict[str, Any]]:
-        """Get all meetings with basic info"""
+        # here i get all meetings with basic infoo
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -259,12 +256,11 @@ class DatabaseManager:
             return []
 
     def search_meetings(self, query: str, max_results: int = 10) -> List[Dict[str, Any]]:
-        """Enhanced semantic search with similarity scoring"""
+        # semantic searching
         try:
             from ai_services import AIServices
             ai_services = AIServices()
 
-            # Get query embeddings
             query_embeddings = ai_services.get_embeddings(query)
             if not query_embeddings:
                 return []
@@ -285,7 +281,7 @@ class DatabaseManager:
                         meeting_embeddings = self._deserialize_embeddings(embeddings_blob)
                         similarity = self._cosine_similarity(query_embeddings, meeting_embeddings)
 
-                        if similarity > 0.3:  # Threshold for relevance
+                        if similarity > 0.3:  # threshold for relevance
                             results.append({
                                 'id': meeting_id,
                                 'title': title,
@@ -295,7 +291,7 @@ class DatabaseManager:
                                 'similarity': similarity
                             })
 
-                # Sort by similarity and limit results
+                # sort by similarity and limit results
                 results.sort(key=lambda x: x['similarity'], reverse=True)
                 return results[:max_results]
 
@@ -304,16 +300,13 @@ class DatabaseManager:
             return []
 
     def get_meeting_statistics(self) -> Dict[str, Any]:
-        """Get comprehensive meeting statistics"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
-                # Total meetings
                 cursor.execute('SELECT COUNT(*) FROM meetings')
                 total_meetings = cursor.fetchone()[0]
 
-                # Language distribution
                 cursor.execute('''
                     SELECT language, COUNT(*) 
                     FROM meetings 
@@ -322,18 +315,15 @@ class DatabaseManager:
                 ''')
                 language_stats = cursor.fetchall()
 
-                # Recent activity (last 10 meetings)
                 cursor.execute('''
                     SELECT COUNT(*) FROM meetings 
                     WHERE datetime(created_at) >= datetime('now', '-30 days')
                 ''')
                 recent_count = cursor.fetchone()[0]
 
-                # Calendar events count
                 cursor.execute('SELECT COUNT(*) FROM calendar_events')
                 events_count = cursor.fetchone()[0]
 
-                # Tasks statistics
                 cursor.execute('''
                     SELECT status, COUNT(*) 
                     FROM tasks 
@@ -355,7 +345,6 @@ class DatabaseManager:
             return {}
 
     def get_similar_meetings(self, meeting_id: int, max_results: int = 3) -> List[Dict[str, Any]]:
-        """Find similar meetings using embeddings"""
         try:
             meeting = self.get_meeting_by_id(meeting_id)
             if not meeting or not meeting.get('embeddings'):
@@ -394,12 +383,11 @@ class DatabaseManager:
             return []
 
     def delete_meeting(self, meeting_id: int) -> bool:
-        """Delete meeting and all related data"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
-                # Delete from all tables (foreign key constraints will handle cascading)
+                # deleting from all tables (foreign key constraints will handle cascading)
                 cursor.execute('DELETE FROM meetings WHERE id = ?', (meeting_id,))
 
                 if cursor.rowcount > 0:
@@ -413,7 +401,6 @@ class DatabaseManager:
             return False
 
     def get_calendar_events(self, days_ahead: int = 7) -> List[Dict[str, Any]]:
-        """Get upcoming calendar events"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -437,7 +424,6 @@ class DatabaseManager:
             return []
 
     def get_pending_tasks(self) -> List[Dict[str, Any]]:
-        """Get all pending tasks"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -467,7 +453,6 @@ class DatabaseManager:
             return []
 
     def update_task_status(self, task_id: int, status: str) -> bool:
-        """Update task status"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -485,19 +470,16 @@ class DatabaseManager:
             return False
 
     def _serialize_embeddings(self, embeddings: List[float]) -> bytes:
-        """Serialize embeddings to bytes for storage"""
         if not embeddings:
             return b''
         return np.array(embeddings, dtype=np.float32).tobytes()
 
     def _deserialize_embeddings(self, embeddings_blob: bytes) -> List[float]:
-        """Deserialize embeddings from bytes"""
         if not embeddings_blob:
             return []
         return np.frombuffer(embeddings_blob, dtype=np.float32).tolist()
 
     def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
-        """Calculate cosine similarity between two vectors"""
         try:
             vec1 = np.array(vec1)
             vec2 = np.array(vec2)
@@ -515,7 +497,6 @@ class DatabaseManager:
             return 0.0
 
     def _get_function_call_stats(self) -> Dict[str, Any]:
-        """Get function call success statistics"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()

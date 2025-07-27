@@ -22,7 +22,6 @@ st.set_page_config(
 
 @st.cache_resource
 def init_services():
-    """Initialize AI services and database"""
     ai_services = AIServices()
     db_manager = DatabaseManager()
     return ai_services, db_manager
@@ -39,7 +38,6 @@ def main():
     st.title("🎯 Smart Meeting Assistant")
     st.markdown("**Transform your meetings into actionable insights using AI**")
 
-    # Sidebar
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox("Choose a page", [
         "📝 Process New Meeting",
@@ -66,7 +64,7 @@ def main():
 def process_meeting_page():
     st.header("Process New Meeting")
 
-    # Meeting details
+    # here are just meeting details
     col1, col2 = st.columns(2)
     with col1:
         meeting_title = st.text_input("Meeting Title*", "Weekly Team Sync")
@@ -83,7 +81,6 @@ def process_meeting_page():
         ], format_func=lambda x: x[1])
         language_code = language[0]
 
-    # File upload with video support
     st.subheader("Upload Meeting Recording")
     uploaded_file = st.file_uploader(
         "Choose audio or video file",
@@ -98,7 +95,6 @@ def process_meeting_page():
         st.success(f"File uploaded: {uploaded_file.name}")
         st.info(f"File size: {file_size:.2f} MB | Type: {file_type}")
 
-        # Show file type specific information
         if file_type == 'video':
             st.warning("📹 Video file detected - will be converted to audio for processing")
         else:
@@ -110,10 +106,8 @@ def process_meeting_page():
                 audio_path = None
 
                 try:
-                    # Step 1: Save uploaded file
                     temp_path = file_handler.save_uploaded_file(uploaded_file)
 
-                    # Step 2: Convert to audio if needed
                     if file_type == 'video':
                         st.write("🎬 Converting video to audio...")
                         audio_path = file_handler.convert_video_to_audio(temp_path)
@@ -124,7 +118,6 @@ def process_meeting_page():
                     else:
                         audio_path = temp_path
 
-                    # Step 3: Transcribe audio
                     st.write("🎵 Transcribing audio...")
                     transcript_data = ai_services.transcribe_audio(
                         audio_path,
@@ -137,13 +130,11 @@ def process_meeting_page():
 
                     st.success("✅ Transcription completed!")
 
-                    # Show transcript preview
                     with st.expander("📝 View Transcript Preview"):
                         st.text_area("Transcript",
                                      transcript_data['text'][:1000] + "..." if len(transcript_data['text']) > 1000 else
                                      transcript_data['text'], height=150)
 
-                    # Step 4: Analyze meeting
                     st.write("🧠 Analyzing meeting content...")
                     analysis = ai_services.analyze_meeting(
                         transcript_data['text'],
@@ -156,19 +147,16 @@ def process_meeting_page():
 
                     st.success("✅ Analysis completed!")
 
-                    # Step 5: Generate embeddings for search
                     st.write("🔍 Generating embeddings for search...")
                     embeddings = ai_services.get_embeddings(
                         f"{meeting_title} {analysis.get('summary', '')} {' '.join(analysis.get('decisions', []))}"
                     )
 
-                    # Step 6: Generate visual summary
                     st.write("🎨 Creating visual summary...")
                     visual_url = ai_services.generate_visual_summary(analysis)
                     if visual_url:
                         st.success("✅ Visual summary created!")
 
-                    # Step 7: Process function calls and extract calendar/task data
                     calendar_events = []
                     tasks = []
 
@@ -180,25 +168,24 @@ def process_meeting_page():
                             elif call['type'] == 'task' and call['result'].get('success'):
                                 tasks.append(call['result']['task'])
 
-                    # Step 8: Save to database with complete data
                     meeting_data = {
                         'title': meeting_title,
                         'date': str(meeting_date),
                         # 'duration': f"{transcript_data.get('duration', 0):.1f} minutes",
-                        'duration': format_duration(transcript_data.get('duration', 0)),  # <--
+                        'duration': format_duration(transcript_data.get('duration', 0)),
 
-                        'transcript': transcript_data['text'],  # Save full transcript
+                        'transcript': transcript_data['text'],
                         'summary': analysis.get('summary', ''),
                         'decisions': analysis.get('decisions', []),
                         'action_items': analysis.get('action_items', []),
                         'participants': analysis.get('participants', []),
                         'follow_up': analysis.get('follow_up', []),
-                        'visual_summary_url': visual_url,  # Save image URL
+                        'visual_summary_url': visual_url,
                         'language': transcript_data.get('language', 'en'),
                         'embeddings': embeddings,
-                        'calendar_events': calendar_events,  # Save calendar events
-                        'tasks': tasks,  # Save tasks
-                        'function_calls': analysis.get('function_calls', [])  # Save function call log
+                        'calendar_events': calendar_events,
+                        'tasks': tasks,
+                        'function_calls': analysis.get('function_calls', [])
                     }
 
                     meeting_id = db_manager.save_meeting(meeting_data)
@@ -206,13 +193,10 @@ def process_meeting_page():
                     if meeting_id:
                         st.success("✅ Meeting saved to knowledge base!")
 
-                        # Display results with calendar integration
                         display_meeting_results(meeting_data, analysis)
 
-                        # Show calendar events and tasks created
                         display_calendar_integration_results(calendar_events, tasks)
 
-                        # Show similar meetings
                         st.subheader("🔗 Similar Meetings")
                         similar = db_manager.get_similar_meetings(meeting_id)
                         if similar:
@@ -224,10 +208,10 @@ def process_meeting_page():
 
                 except Exception as e:
                     st.error(f"Processing failed: {str(e)}")
-                    st.exception(e)  # Show full traceback for debugging
+                    st.exception(e)
 
                 finally:
-                    # Clean up temporary files
+                    # cleaning up temporary files
                     for path in [temp_path, audio_path]:
                         if path and os.path.exists(path) and path != temp_path:
                             try:
@@ -242,7 +226,6 @@ def process_meeting_page():
 
 
 def display_calendar_integration_results(calendar_events, tasks):
-    """Display created calendar events and tasks"""
     if calendar_events or tasks:
         st.subheader("📅 Calendar Integration Results")
 
@@ -277,7 +260,6 @@ def display_calendar_integration_results(calendar_events, tasks):
 def search_analytics_page():
     st.header("🔍 Search & Analytics")
 
-    # Search interface
     col1, col2 = st.columns([3, 1])
     with col1:
         search_query = st.text_input("Search meetings...", placeholder="Enter keywords to search through all meetings")
@@ -307,7 +289,6 @@ def search_analytics_page():
             else:
                 st.info("No meetings found matching your search.")
 
-    # Display selected meeting details if any
     if hasattr(st.session_state, 'selected_meeting'):
         meeting = db_manager.get_meeting_by_id(st.session_state.selected_meeting)
         if meeting:
@@ -317,7 +298,6 @@ def search_analytics_page():
 
 
 def display_full_meeting_details(meeting, show_transcript_expander=True):
-    """Display full meeting details with optional transcript expander"""
     col1, col2 = st.columns(2)
 
     with col1:
@@ -329,16 +309,15 @@ def display_full_meeting_details(meeting, show_transcript_expander=True):
         if meeting.get('visual_summary_url'):
             st.image(meeting['visual_summary_url'], caption="Meeting Visual Summary", width=200)
 
-    # Transcript - conditional expander
+    # transcript - conditional expander
     if show_transcript_expander:
         with st.expander("📝 Full Transcript"):
             st.text_area("Transcript", meeting.get('transcript', 'No transcript available'), height=300)
     else:
-        # Show transcript directly without expander
+        # show transcript directly without expander
         st.subheader("📝 Full Transcript")
         st.text_area("Transcript", meeting.get('transcript', 'No transcript available'), height=300)
 
-    # Summary and analysis
     st.write(f"**Summary:** {meeting.get('summary', 'No summary available')}")
 
     col1, col2 = st.columns(2)
@@ -359,14 +338,13 @@ def display_full_meeting_details(meeting, show_transcript_expander=True):
 def dashboard_page():
     st.header("📊 Meeting Dashboard")
 
-    # Get statistics
+    # getting statistics
     stats = db_manager.get_meeting_statistics()
 
     if not stats:
         st.info("No meeting data available yet.")
         return
 
-    # Key metrics
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
@@ -384,7 +362,6 @@ def dashboard_page():
 
     st.divider()
 
-    # Charts and visualizations
     col1, col2 = st.columns(2)
 
     with col1:
@@ -407,12 +384,11 @@ def dashboard_page():
         else:
             st.info("No task data available")
 
-    # Recent meetings
     st.subheader("📅 Recent Meetings")
     meetings = db_manager.get_all_meetings()
 
     if meetings:
-        for meeting in meetings[:5]:  # Show last 5 meetings
+        for meeting in meetings[:5]:
             col1, col2, col3 = st.columns([2, 1, 1])
 
             with col1:
@@ -439,7 +415,6 @@ def dashboard_page():
 def calendar_tasks_page():
     st.header("📅 Calendar & Tasks")
 
-    # Tabs for calendar and tasks
     tab1, tab2 = st.tabs(["📅 Calendar Events", "📝 Tasks"])
 
     with tab1:
@@ -474,22 +449,19 @@ def calendar_tasks_page():
     with tab2:
         st.subheader("Task Management")
 
-        # Task filters
         col1, col2 = st.columns(2)
         with col1:
             show_status = st.selectbox("Filter by Status", ["all", "pending", "completed", "in_progress"])
         with col2:
             show_priority = st.selectbox("Filter by Priority", ["all", "high", "medium", "low"])
 
-        # Get tasks
         if show_status == "all":
-            tasks = db_manager.get_pending_tasks()  # You might want to add a get_all_tasks method
+            tasks = db_manager.get_pending_tasks()
         else:
-            tasks = db_manager.get_pending_tasks()  # Filter later
+            tasks = db_manager.get_pending_tasks()
 
         if tasks:
             for task in tasks:
-                # Apply filters
                 if show_status != "all" and task['status'] != show_status:
                     continue
                 if show_priority != "all" and task['priority'] != show_priority:
@@ -529,7 +501,7 @@ def calendar_tasks_page():
 def meeting_management_page():
     st.header("🗑️ Meeting Management")
 
-    # Get all meetings
+    #getting all the meetings
     meetings = db_manager.get_all_meetings()
 
     if not meetings:
@@ -538,14 +510,12 @@ def meeting_management_page():
 
     st.subheader("All Meetings")
 
-    # Add search/filter options
     col1, col2 = st.columns(2)
     with col1:
         search_filter = st.text_input("Filter by title...")
     with col2:
         sort_by = st.selectbox("Sort by", ["Date (Newest)", "Date (Oldest)", "Title"])
 
-    # Apply filters and sorting
     filtered_meetings = meetings
     if search_filter:
         filtered_meetings = [m for m in meetings if search_filter.lower() in m['title'].lower()]
@@ -555,7 +525,6 @@ def meeting_management_page():
     elif sort_by == "Title":
         filtered_meetings.sort(key=lambda x: x['title'])
 
-    # Display meetings with management options
     for meeting in filtered_meetings:
         with st.container():
             col1, col2, col3 = st.columns([3, 1, 1])
@@ -574,7 +543,6 @@ def meeting_management_page():
                 if st.button(f"🗑️ Delete", key=f"delete_{meeting['id']}", type="secondary"):
                     st.session_state[f"confirm_delete_{meeting['id']}"] = True
 
-                # Confirmation dialog
                 if st.session_state.get(f"confirm_delete_{meeting['id']}", False):
                     st.warning("Are you sure? This action cannot be undone.")
                     col_yes, col_no = st.columns(2)
@@ -593,16 +561,13 @@ def meeting_management_page():
 
             st.divider()
 
-    # Show selected meeting details OUTSIDE the loop to avoid nesting
     if st.session_state.get('show_details') and st.session_state.get('selected_meeting'):
         st.divider()
         full_meeting = db_manager.get_meeting_by_id(st.session_state.selected_meeting)
         if full_meeting:
             st.subheader(f"📄 Meeting Details: {full_meeting['title']}")
-            # Don't use expander for transcript since we're showing details directly
             display_full_meeting_details(full_meeting, show_transcript_expander=False)
 
-            # Add close button
             if st.button("Close Details"):
                 st.session_state.show_details = False
                 st.session_state.selected_meeting = None
